@@ -4,6 +4,7 @@ import (
 	"./netlinkAudit"
 	"log"
 	"os"
+	"os/signal"
 	"syscall"
 	"time"
 )
@@ -75,7 +76,12 @@ func main() {
 	done := make(chan bool, 1)
 	msg := make(chan string)
 	errchan := make(chan error)
+	exit :=  make(chan os.Signal, 1)
 
+	// Go rutine to monitor events and send them to channels
+	go netlinkAudit.Getreply(s, done, msg, errchan)
+
+	// Go rutine to extract events from channels
 	go func() {
 		f, err := os.OpenFile("/tmp/log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0660)	
 		if err != nil {
@@ -97,12 +103,21 @@ func main() {
 		}
 	}()
 
-	go netlinkAudit.Getreply(s, done, msg, errchan)
+	// Notify when control-c is pressed
+	signal.Notify(exit, os.Interrupt)
+	signal.Notify(exit, syscall.SIGTERM)
+	go func() {
+        <-exit
+        done <- true
+		close(done)
+        os.Exit(1)
+    }()
 
-	time.Sleep(time.Second * 10)
-	done <- true
-	close(done)
 
+    for {
+    	time.Sleep(time.Second * 5)	
+    }
+	
 	//Important point is that NLMSG_ERROR is also an acknowledgement from Kernel.
 	//If the first 4 bytes of Data part are zero then it means the message is acknowledged
 }

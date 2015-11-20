@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./netlinkAudit"
+	"./libaudit-go"
 	"log"
 	"os"
 	"os/signal"

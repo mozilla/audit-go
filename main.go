@@ -14,7 +14,7 @@ var done chan bool
 var debug bool
 
 func main() {
-    // Request NetlinkSocket
+	// Request NetlinkSocket
 	s, err := netlinkAudit.GetNetlinkSocket()
 	if err != nil {
 		log.Println(err)
@@ -23,21 +23,16 @@ func main() {
 	defer s.Close()
 	debug = false
 
-    // TODO: do this inside the library on every function?
-	if os.Getuid() != 0 {
-		log.Fatalln("Not Root User! Exiting!")
-	}
-
-    // Enable Audit
+	// Enable Audit
 	err = netlinkAudit.AuditSetEnabled(s)
 	if err != nil {
 		log.Fatal("Error while enabling Audit !", err)
 	}
 
-    // Check if Audit is enabled
+	// Check if Audit is enabled
 	err = netlinkAudit.AuditIsEnabled(s)
 
-    // TODO: do all this inside the library?
+	// TODO: do all this inside the library?
 	if debug == true {
 		log.Println(netlinkAudit.ParsedResult)
 	}
@@ -47,14 +42,14 @@ func main() {
 		log.Fatalln("Audit Not Enabled! Exiting")
 	}
 
-    // Set the maximum number of messages
-    // that the kernel will send per second
+	// Set the maximum number of messages
+	// that the kernel will send per second
 	err = netlinkAudit.AuditSetRateLimit(s, 600)
 	if err != nil {
 		log.Fatalln("Error Setting Rate Limit!!", err)
 	}
 
-    // Set max limit audit message queue
+	// Set max limit audit message queue
 	err = netlinkAudit.AuditSetBacklogLimit(s, 420)
 	if err != nil {
 		log.Fatalln("Error Setting Backlog Limit!!", err)
@@ -73,7 +68,7 @@ func main() {
 		os.Exit(0)
 	}
 
-    // Set audit rules
+	// Set audit rules
 	err = netlinkAudit.SetRules(s, content)
 	// err = netlinkAudit.DeleteAllRules(s)
 	if err != nil {

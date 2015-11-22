@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"io/ioutil"
 	"syscall"
 	"time"
 )
@@ -65,8 +66,15 @@ func main() {
 		log.Println("Set pid successful!!")
 	}
 
+	// Load all rules
+	content, err := ioutil.ReadFile("audit.rules.json")
+	if err != nil {
+		log.Print("Error:", err)
+		os.Exit(0)
+	}
+
     // Set audit rules
-	err = netlinkAudit.SetRules(s)
+	err = netlinkAudit.SetRules(s, content)
 	// err = netlinkAudit.DeleteAllRules(s)
 	if err != nil {
 		log.Fatalln("Setting Rules Unsuccessful! Exiting")

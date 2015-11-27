@@ -1,6 +1,6 @@
 {
 	"delete" : true,
- 	"buffer" : 8192,
+ 	"buffer" : 16384,
  	"panic"  : 2,
  	"custom_rule": [
  		{

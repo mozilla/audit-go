@@ -15,7 +15,7 @@ var debug bool
 
 func main() {
 	// Request NetlinkSocket
-	s, err := netlinkAudit.GetNetlinkSocket()
+	s, err := netlinkAudit.NewNetlinkConnection()
 	if err != nil {
 		log.Println(err)
 		log.Fatalln("Error while availing socket! Exiting!")

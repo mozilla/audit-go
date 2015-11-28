@@ -30,16 +30,14 @@ func main() {
 	}
 
 	// Check if Audit is enabled
-	err = netlinkAudit.AuditIsEnabled(s)
+	status, err := netlinkAudit.AuditIsEnabled(s)
 
-	// TODO: do all this inside the library?
-	if debug == true {
-		log.Println(netlinkAudit.ParsedResult)
-	}
-	if err == nil && netlinkAudit.ParsedResult.Enabled == 1 {
+	if err == nil && status == 1 {
 		log.Println("Enabled Audit!!")
+	} else  if err == nil && status == 0 {
+		log.Fatalln("Audit Not Enabled!")
 	} else {
-		log.Fatalln("Audit Not Enabled! Exiting")
+		log.Fatalln("Error while fetching status!",)
 	}
 
 	// Set the maximum number of messages

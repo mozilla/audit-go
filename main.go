@@ -4,14 +4,23 @@ import (
 	"./libaudit-go"
 	"log"
 	"os"
-	"os/signal"
+	//"os/signal"
 	"io/ioutil"
 	"syscall"
-	"time"
+	//"time"
 )
 
 var done chan bool
 var debug bool
+
+func EventCallback(msg string, ce chan error, args ...interface{}) {
+	log.Println(msg)
+	f := args[0].(os.File)
+	_, err := f.WriteString(msg + "\n")
+	if err != nil {
+		log.Println("Writing Error!!", err)
+	}
+}
 
 func main() {
 	// Request NetlinkSocket
@@ -73,52 +82,13 @@ func main() {
 		log.Fatalln("Setting Rules Unsuccessful! Exiting")
 	}
 	
-
-	done := make(chan bool, 1)
-	msg := make(chan string)
+	f, err := os.OpenFile("/tmp/log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0660)
+	defer f.Close()
 	errchan := make(chan error)
-	exit :=  make(chan os.Signal, 1)
 
-	// Go rutine to monitor events and send them to channels
-	go netlinkAudit.Getreply(s, done, msg, errchan)
+	// Go rutine to monitor events and call callback for each event fired
+	netlinkAudit.Get_audit_events(s, EventCallback, errchan, *f)
 
-	// Go rutine to extract events from channels
-	go func() {
-		f, err := os.OpenFile("/tmp/log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0660)	
-		if err != nil {
-			log.Fatalln("Error Creating File!!")
-		}
-		defer f.Close()
-
-		for {
-			select {
-				case ev := <-msg:
-					log.Println(ev + "\n")
-					_, err := f.WriteString(ev + "\n")
-					if err != nil {
-						log.Println("Writing Error!!")
-					}
-				case ev := <-errchan:
-					log.Println(ev)
-			}
-		}
-	}()
-
-	// Notify when control-c is pressed
-	signal.Notify(exit, os.Interrupt)
-	signal.Notify(exit, syscall.SIGTERM)
-	go func() {
-        <-exit
-        done <- true
-		close(done)
-        os.Exit(1)
-    }()
-
-
-    for {
-    	time.Sleep(time.Second * 5)	
-    }
-	
 	//Important point is that NLMSG_ERROR is also an acknowledgement from Kernel.
 	//If the first 4 bytes of Data part are zero then it means the message is acknowledged
 }

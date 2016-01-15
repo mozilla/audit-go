@@ -7,7 +7,6 @@ import (
 	//"os/signal"
 	"io/ioutil"
 	"syscall"
-	//"time"
 )
 
 var done chan bool
@@ -16,7 +15,7 @@ var debug bool
 func EventCallback(msg string, ce chan error, args ...interface{}) {
 	log.Println(msg)
 	f := args[0].(os.File)
-	_, err := f.WriteString(msg + "\n")
+	_, err := f.WriteString(msg)
 	if err != nil {
 		log.Println("Writing Error!!", err)
 	}
@@ -30,7 +29,6 @@ func main() {
 		log.Fatalln("Error while availing socket! Exiting!")
 	}
 	defer s.Close()
-	debug = false
 
 	// Enable Audit
 	err = netlinkAudit.AuditSetEnabled(s)
@@ -43,10 +41,10 @@ func main() {
 
 	if err == nil && status == 1 {
 		log.Println("Enabled Audit!!")
-	} else  if err == nil && status == 0 {
+	} else if err == nil && status == 0 {
 		log.Fatalln("Audit Not Enabled!")
 	} else {
-		log.Fatalln("Error while fetching status!",)
+		log.Fatalln("Error while fetching status!", err)
 	}
 
 	// Set the maximum number of messages
@@ -63,7 +61,7 @@ func main() {
 	}
 
 	// Register current pid with audit
-    err = netlinkAudit.AuditSetPid(s, uint32(syscall.Getpid()))
+	err = netlinkAudit.AuditSetPid(s, uint32(syscall.Getpid()))
 	if err == nil {
 		log.Println("Set pid successful!!")
 	}
@@ -81,13 +79,16 @@ func main() {
 	if err != nil {
 		log.Fatalln("Setting Rules Unsuccessful! Exiting")
 	}
-	
+
 	f, err := os.OpenFile("/tmp/log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0660)
+	if err != nil {
+		log.Fatalln("Unable to open file!")
+	}
 	defer f.Close()
 	errchan := make(chan error)
 
 	// Go rutine to monitor events and call callback for each event fired
-	netlinkAudit.Get_audit_events(s, EventCallback, errchan, *f)
+	netlinkAudit.GetAuditEvents(s, EventCallback, errchan, *f)
 
 	//Important point is that NLMSG_ERROR is also an acknowledgement from Kernel.
 	//If the first 4 bytes of Data part are zero then it means the message is acknowledged

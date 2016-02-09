@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"syscall"
 	"encoding/json"
-	"time"
 )
 
 var done chan bool
@@ -39,7 +38,7 @@ func main() {
 	defer s.Close()
 
 	// Enable Audit
-	err = netlinkAudit.AuditSetEnabled(s)
+	err = netlinkAudit.AuditSetEnabled(s, 1)
 	if err != nil {
 		log.Fatal("Error while enabling Audit", err)
 	}
@@ -75,6 +74,7 @@ func main() {
 		log.Println("Set pid successful")
 	}
 
+
 	// Load all rules
 	content, err := ioutil.ReadFile("audit.rules.json")
 	if err != nil {
@@ -99,5 +99,5 @@ func main() {
 	// Go rutine to monitor events and feet AuditEvent type events to the callback
 	netlinkAudit.GetAuditEvents(s, EventCallback, errchan, *f)
 
-	time.Sleep(3600 * time.Second)
+	select {}
 }

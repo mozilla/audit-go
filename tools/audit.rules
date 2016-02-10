@@ -1,0 +1,149 @@
+audit.rules:
+# This file contains the auditctl rules that are loaded
+# whenever the audit daemon is started via the initscripts.
+# The rules are simply the parameters that would be passed
+# to auditctl.
+ 
+# First rule - delete all previous rules.
+-D
+ 
+# Increase the acching buffers to survive spikes, without dropping events.
+# You can make this bigger for busy systems.
+# Value is x times an audit record size in kernel memory.
+# Large value may use quite a few megs of kernel memory.
+-b 16348
+ 
+# Ignore errors (if file path doesn't exists, for example, don't stop processing rules).
+-i
+ 
+## Enable the kernel audit subsystem.
+# 1 means the configuration can be modified.
+# 2 means immutable until reboot (only set 2 at the *end* of the rule file - else you'll shoot yourself in the foot)
+-e 1
+ 
+# Rate limit audit at the kernel level (msg/s)
+-r 500
+ 
+## Generic logging
+# Bypass regular calls
+-a always,exit -F arch=b64 -S personality -k bypass
+-a always,exit -F arch=b32 -S personality -k bypass
+
+## Exec logging
+# We're first excluding quite a few binaries from exec logging.
+# These are called often and do not provide significant value.
+-A exit,never -F dir=/usr/lib/nagios/plugins -F perm=x
+-A exit,never -F dir=/usr/lib64/nagios/plugins -F perm=x
+-A exit,never -F path=/opt/compaq/utils/usb-device.sh -F perm=x
+-A exit,never -F path=/bin/ls -F perm=x
+-A exit,never -F path=/bin/sh -F perm=x
+-A exit,never -F path=/bin/grep  -F perm=x
+-A exit,never -F path=/bin/egrep -F perm=x
+-A exit,never -F path=/bin/less -F perm=x
+-A exit,never -F path=/usr/bin/lesspipe.sh -F perm=x
+-A exit,never -F path=/usr/bin/tail -F perm=x
+-A exit,never -F path=/sbin/consoletype -F perm=x
+-A exit,never -F path=/bin/stty -F perm=x
+-A exit,never -F path=/usr/bin/tty -F perm=x
+-A exit,never -F path=/bin/tput -F perm=x
+-A exit,never -F path=/usr/bin/file -F perm=x
+-A exit,never -F path=/usr/bin/w -F perm=x
+-A exit,never -F path=/bin/netstat -F perm=x
+-A exit,never -F path=/bin/uname -F perm=x
+-A exit,never -F path=/bin/basename -F perm=x
+-A exit,never -F path=/usr/bin/which -F perm=x
+-A exit,never -F path=/bin/netstat -F perm=x
+-A exit,never -F path=/usr/bin/netstat -F perm=x
+-A exit,never -F path=/bin/hostname -F perm=x
+-A exit,never -F path=/usr/bin/wc -F perm=x
+-A exit,never -F path=/usr/bin/gmetric -F perm=x
+-A exit,never -F path=/sbin/ethtool -F perm=x
+-A exit,never -F path=/usr/bin/sed -F perm=x
+-A exit,never -F path=/bin/sed -F perm=x
+-A exit,never -F path=/bin/ping -F perm=x
+-A exit,never -F path=/sbin/lsmod -F perm=x
+-A exit,never -F path=/bin/sleep -F perm=x
+-A exit,never -F path=/bin/cut -F perm=x
+-A exit,never -F path=/bin/touch -F perm=x
+# as we're getting the fork'd exec logged, so such programs as env are ok to exclude
+-A exit,never -F path=/bin/env -F perm=x
+ 
+# Setup the exec monitoring for all other cases
+-a exit,always -F arch=b64 -S execve -k exec
+-a exit,always -F arch=b32 -S execve -k exec
+
+ 
+## Log changes to system configuration files.
+# Modify audit configuration
+-w /etc/audit/ -p wa -k audit
+-w /etc/audisp/ -p wa -k audit
+-w /etc/sysconfig/auditd -p wa -k audit
+-w /etc/libaudit.conf -p wa -k audit
+ 
+# Modify logging configuration
+-w /etc/rsyslog.conf -p wa -k syslog
+-w /etc/rsyslog-ng/ -p wa -k syslog
+-w /etc/syslog.conf -p wa -k syslog
+-w /etc/syslog-ng.conf -p wa -k syslog
+-w /etc/syslog-ng/ -p wa -k syslog
+-w /data/hekad/hekad.toml -p wa -k heka
+-w /etc/hekad/hekad.toml -p wa -k heka
+# Modify cron
+-w /etc/cron.allow -p wa -k cron
+-w /etc/cron.deny -p wa -k cron
+-w /etc/cron.d/ -p wa -k cron
+-w /etc/cron.daily/ -p wa -k cron
+-w /etc/cron.hourly/ -p wa -k cron
+-w /etc/cron.monthly/ -p wa -k cron
+-w /etc/cron.weekly/ -p wa -k cron
+-w /etc/crontab -p wa -k cron
+-w /var/spool/cron/root -p wa -k cron
+ 
+# Modify startup
+-w /etc/rc.d/init.d/ -p wa -k init
+-w /sbin/init -p wa -k init
+-w /etc/inittab -p wa -k init
+-w /etc/systemd -p wa -k init
+
+# Modify PAM
+-w /etc/pam.d -p wa -k pam
+-w /etc/security -p wa -k pam
+-w /lib/security -p wa -k pam
+ 
+# Modify SSHD
+-w /etc/sshd -p wa -k sshd
+ 
+# Users
+-w /etc/group -p wa -k user
+-w /etc/passwd -p wa -k user
+-w /etc/gshadow -p wa -k user
+-w /etc/shadow -p wa -k user
+-w /etc/security/opasswd -p wa -k user
+-w /etc/sudoers -p wa -k user
+ 
+# Time changes
+-a always,exit -F arch=b32 -S adjtimex -S settimeofday -k time-change
+-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change
+
+-w /etc/localtime -p wa -k time-change
+ 
+# Module loading
+-a exit,always -F arch=b64 -S init_module -k module
+-a exit,always -F arch=b32 -S init_module -k module
+
+ 
+# Swapping kernel via kexec
+-a exit,always -F arch=b64 -S kexec_load -k kexec
+-a exit,always -F arch=b32 -S kexec_load -k kexec
+
+
+# Changes to binaries (common locations)
+-w /usr/bin -p wa -k binaries
+-w /bin -p wa -k binaries
+-w /usr/sbin -p wa -k binaries
+-w /sbin -p wa -k binaries
+-w /usr/local/bin -p wa -k binaries
+-w /usr/local/sbin -p wa -k binaries
+
+# uncomment to temporarily disable auditd
+#-D

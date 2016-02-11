@@ -72,6 +72,11 @@ audit.rules:
 -a exit,always -F arch=b64 -S execve -k exec
 -a exit,always -F arch=b32 -S execve -k exec
 
+-a entry,always -S clone -S fork -S vfork
+-a entry,always -S access -F a1=4
+-a action,filter -S system_call -F field=value -k key_name`
+-a always,exit -F arch=b64 -F "auid>=1000" -S rename -S renameat -k rename
+-a always,exit -F path=/etc/hosts -F perm=wa -k hosts_file_change
  
 ## Log changes to system configuration files.
 # Modify audit configuration

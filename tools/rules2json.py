@@ -7,6 +7,7 @@ import sys
 with open(sys.argv[1], 'r') as my_file:
 	rules = my_file.readlines()
 	watches = []
+	syscalls = []
 	for rule in rules:
 		#ignore if don't start with '-'
 		if rule[0] == "-":
@@ -34,14 +35,22 @@ with open(sys.argv[1], 'r') as my_file:
 				watches.append(json)
 			elif rule[0] == "-a":
 				# parse syscalls
-				# TODO: take note of -a and -A
-				print(rule)
+				actions = rule[1].split(",")
+				json = {'actions':actions, "fields":[], "syscalls":[]}
+				for i in range(2, len(rule)):
+					if rule[i] == "-S":
+						json["syscalls"].append(rule[i+1])
+					elif rule[i] == "-F":
+						# fix this
+						json["fields"].append(rule[i+1])
+					elif rule[i] == "-k":
+						json["key"] = rule[i+1]
+				if not json["syscalls"]:
+					del json["syscalls"]
+				if not json["fields"]:
+					del json["fields"]
+				syscalls.append(json)
 			#else:
 				#print(rule)
 	print watches
-# -w /etc/syslog.conf
-# -w /etc/syslog-ng.conf -p wa -k syslog
-# -w /etc/syslog.conf -p wa 
-# -w /etc/rsyslog.conf -k syslog -p wa
-# -w /etc/rsyslog-ng/ -k syslog
-
+	print syscalls

@@ -19,19 +19,20 @@
  	],
  	"syscall_rules" : [ 
  		{
-			"action" : ["always", "exit"],
+			"syscalls" : ["rmdir", "mkdir"],
+			"actions" : ["always", "exit"],
 			"fields" : [
  				{"name":"arch", "op":"eq", "value":32},
  				{"name":"key","op":"eq","value":"rmd"}
- 			],
-			"name" : "rmdi"
+ 			]
 		},
 		{
-			"action" : ["always", "exit"],
+			"actions" : ["always", "exit"],
 			"fields" : [
  				{"name":"arch", "op":"eq", "value":32}
  			],
-			"name" : "mkdir"
+			"syscalls" : ["mkdir"],
+			"key": "test"
 		}
 	]
 }

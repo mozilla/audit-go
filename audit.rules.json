@@ -13,10 +13,10 @@
  	],
 	"file_rules" : [
  		{ 
- 			"path" : "/etc/passwd",
- 			"permission" : "wa",
+ 			"path" : "/home/hardikj/a",
  			"key" : "passwd_changes"
- 	}],
+ 		}
+ 	],
  	"syscall_rules" : [ 
  		{
 			"action" : ["always", "exit"],
@@ -24,7 +24,7 @@
  				{"name":"arch", "op":"eq", "value":32},
  				{"name":"key","op":"eq","value":"rmd"}
  			],
-			"name" : "rmdir"
+			"name" : "rmdi"
 		},
 		{
 			"action" : ["always", "exit"],

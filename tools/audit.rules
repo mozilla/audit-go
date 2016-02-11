@@ -81,8 +81,8 @@ audit.rules:
 -w /etc/libaudit.conf -p wa -k audit
  
 # Modify logging configuration
--w /etc/rsyslog.conf -p wa -k syslog
--w /etc/rsyslog-ng/ -p wa -k syslog
+-w /etc/rsyslog.conf  -k syslog -p wa
+-w /etc/rsyslog-ng/ -k syslog
 -w /etc/syslog.conf -p wa -k syslog
 -w /etc/syslog-ng.conf -p wa -k syslog
 -w /etc/syslog-ng/ -p wa -k syslog

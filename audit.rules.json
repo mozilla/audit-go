@@ -29,7 +29,7 @@
 		{
 			"actions" : ["always", "exit"],
 			"fields" : [
- 				{"name":"arch", "op":"eq", "value":32}
+ 				{"name":"arch", "op":"eq", "value":64}
  			],
 			"syscalls" : ["mkdir"],
 			"key": "test"

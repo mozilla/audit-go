@@ -3,11 +3,13 @@
 # This file converts standard rules in audit.rules to json rules 
 
 import sys
+import re
 
 with open(sys.argv[1], 'r') as my_file:
 	rules = my_file.readlines()
 	watches = []
 	syscalls = []
+	final = {}
 	for rule in rules:
 		#ignore if don't start with '-'
 		if rule[0] == "-":
@@ -34,6 +36,7 @@ with open(sys.argv[1], 'r') as my_file:
 					exit()
 				watches.append(json)
 			elif rule[0] == "-a":
+				#TODO: Add support for -A
 				# parse syscalls
 				actions = rule[1].split(",")
 				json = {'actions':actions, "fields":[], "syscalls":[]}
@@ -41,16 +44,49 @@ with open(sys.argv[1], 'r') as my_file:
 					if rule[i] == "-S":
 						json["syscalls"].append(rule[i+1])
 					elif rule[i] == "-F":
-						# fix this
-						json["fields"].append(rule[i+1])
+						result = re.match("(.+)(!=|>=|<=|&=|=|>|<|&)(.+)", rule[i+1])
+						if result:
+							op = result.group(2)
+							if op == "!=":
+								opval =  "nt_eq"
+							elif op == ">=":
+								opval = "gt_or_eq"
+							elif op == "<=":
+								opval = "lt_or_eq"
+							elif op == "&=":
+								opval = "and_eq"
+							elif op == "=":
+								opval = "eq"
+							elif op == ">":
+								opval = "gt"
+							elif op == "<":
+								opval = "lt"
+							elif op == "&":
+								opval = "and"
+
+							fieldname = result.group(1)
+							fieldval = result.group(3)
+							if fieldname == "arch":
+								fieldval = int(fieldval[1:])
+
+							json["fields"].append({"name":fieldname, "op": opval, "value":fieldval})
 					elif rule[i] == "-k":
 						json["key"] = rule[i+1]
+
 				if not json["syscalls"]:
 					del json["syscalls"]
 				if not json["fields"]:
 					del json["fields"]
 				syscalls.append(json)
-			#else:
-				#print(rule)
+			elif rule[0] == "-D":
+				final["delete"] = True
+			elif rule[0] == "-b":
+				final["buffer"] = rule[1]
+			elif rule[0] == "-e":
+				final["enable"] = rule[1]
+			elif rule[0] == "-r":
+				final["rate"] = rule[1]
+
+	print final
 	print watches
 	print syscalls

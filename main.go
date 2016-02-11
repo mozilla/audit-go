@@ -86,7 +86,7 @@ func main() {
 	err = netlinkAudit.SetRules(s, content)
 	// err = netlinkAudit.DeleteAllRules(s)
 	if err != nil {
-		log.Fatalln("Setting Rules Unsuccessful, Exiting")
+		log.Fatalln("Setting Rules Unsuccessful, Exiting", err)
 	}
 
 	f, err := os.OpenFile("/tmp/log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0660)

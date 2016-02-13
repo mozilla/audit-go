@@ -6,7 +6,12 @@ audit.rules:
  
 # First rule - delete all previous rules.
 -D
- 
+
+## Enable the kernel audit subsystem.
+# 1 means the configuration can be modified.
+# 2 means immutable until reboot (only set 2 at the *end* of the rule file - else you'll shoot yourself in the foot)
+-e 1
+
 # Increase the acching buffers to survive spikes, without dropping events.
 # You can make this bigger for busy systems.
 # Value is x times an audit record size in kernel memory.
@@ -15,11 +20,6 @@ audit.rules:
  
 # Ignore errors (if file path doesn't exists, for example, don't stop processing rules).
 -i
- 
-## Enable the kernel audit subsystem.
-# 1 means the configuration can be modified.
-# 2 means immutable until reboot (only set 2 at the *end* of the rule file - else you'll shoot yourself in the foot)
--e 1
  
 # Rate limit audit at the kernel level (msg/s)
 -r 500

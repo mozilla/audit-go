@@ -1,48 +1,54 @@
 #!/usr/bin/python
 
-# This file converts standard rules in audit.rules to json rules 
+# This file converts standard rules in audit.rules to json rules
 
+from collections import OrderedDict
+import json
 import sys
 import re
+
+if len(sys.argv) <=  1:
+	print("No rule file specified")
+	exit()
 
 with open(sys.argv[1], 'r') as my_file:
 	rules = my_file.readlines()
 	watches = []
 	syscalls = []
-	final = {}
+	final = OrderedDict()
 	for rule in rules:
 		#ignore if don't start with '-'
 		if rule[0] == "-":
 			rule = rule.split()
 			if rule[0] == "-w":
 				# parse watches on file system
-				json = {'path':rule[1]}
+				watch_json = {'path':rule[1]}
 
 				if len(rule) >= 2:
 					if rule[2] == "-p":
 						if len(rule) > 4 and rule[4] == "-k":
-							json['permission'] = rule[3]
-							json['key'] = rule[5] 
+							watch_json['permission'] = rule[3]
+							watch_json['key'] = rule[5] 
 						else:
-							json['permission'] = rule[3]
+							watch_json['permission'] = rule[3]
 					elif rule[2] == "-k": 
 						if len(rule) > 4 and rule[4] == "-p":
-							json['permission'] = rule[5]
-							json['key'] = rule[3] 
+							watch_json['permission'] = rule[5]
+							watch_json['key'] = rule[3] 
 						else:
-							json['key'] = rule[3]
+							watch_json['key'] = rule[3]
 				else:
 					print("Invalid rule: "+" ".join(rule))
 					exit()
-				watches.append(json)
-			elif rule[0] == "-a":
+				watches.append(watch_json)
+			elif rule[0] == "-a" or rule[0] == "-A":
 				#TODO: Add support for -A
 				# parse syscalls
 				actions = rule[1].split(",")
-				json = {'actions':actions, "fields":[], "syscalls":[]}
+				syscall_json = {'actions':actions, "fields":[], "syscalls":[]}
 				for i in range(2, len(rule)):
 					if rule[i] == "-S":
-						json["syscalls"].append(rule[i+1])
+						syscall_json["syscalls"].append(rule[i+1])
 					elif rule[i] == "-F":
 						result = re.match("(.+)(!=|>=|<=|&=|=|>|<|&)(.+)", rule[i+1])
 						if result:
@@ -68,16 +74,20 @@ with open(sys.argv[1], 'r') as my_file:
 							fieldval = result.group(3)
 							if fieldname == "arch":
 								fieldval = int(fieldval[1:])
-
-							json["fields"].append({"name":fieldname, "op": opval, "value":fieldval})
+							try:
+								if fieldval.isdigit():
+									fieldval = int(fieldval)
+							except:
+								pass
+							syscall_json["fields"].append({"name":fieldname, "op": opval, "value":fieldval})
 					elif rule[i] == "-k":
-						json["key"] = rule[i+1]
+						syscall_json["key"] = rule[i+1]
 
-				if not json["syscalls"]:
-					del json["syscalls"]
-				if not json["fields"]:
-					del json["fields"]
-				syscalls.append(json)
+				if not syscall_json["syscalls"]:
+					del syscall_json["syscalls"]
+				if not syscall_json["fields"]:
+					del syscall_json["fields"]
+				syscalls.append(syscall_json)
 			elif rule[0] == "-D":
 				final["delete"] = True
 			elif rule[0] == "-b":
@@ -86,7 +96,10 @@ with open(sys.argv[1], 'r') as my_file:
 				final["enable"] = rule[1]
 			elif rule[0] == "-r":
 				final["rate"] = rule[1]
+	final["file_rules"] = watches
+	final["syscall_rules"] = syscalls
+	final = json.dumps(final, indent=4, separators=(',', ': '))
+	print(final)
 
-	print final
-	print watches
-	print syscalls
+#with open('audit.rules.json', 'w') as outfile:
+#    json.dump(final, outfile, sort_keys=True, indent=4, separators=(',', ': '))

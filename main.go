@@ -4,9 +4,11 @@ import (
 	"./libaudit-go"
 	"log"
 	"os"
-	"io/ioutil"
+	//"io/ioutil"
 	"syscall"
 	"encoding/json"
+	"os/exec"
+	"strconv"
 )
 
 var done chan bool
@@ -37,6 +39,20 @@ func main() {
 	}
 	defer s.Close()
 
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	out, err := exec.Command(dir+"/tools/rules2json.py", dir+"/"+os.Args[1]).Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var m interface{}
+	err = json.Unmarshal(out, &m)
+	rules:= m.(map[string]interface{})
+
 	// Enable Audit
 	err = netlinkAudit.AuditSetEnabled(s, 1)
 	if err != nil {
@@ -54,19 +70,45 @@ func main() {
 		log.Fatalln("Error while fetching status", err)
 	}
 
+	//Delete all rules
+	if _, ok := rules["delete"]; ok {
+		log.Println("Deleting all rules")
+		err = netlinkAudit.DeleteAllRules(s)
+		if err != nil {
+			log.Fatalln("Deleting Rules Unsuccessful, Exiting", err)
+		}
+	}
+
 	// Set the maximum number of messages
 	// that the kernel will send per second
-	// TODO - fetch these from config
-	err = netlinkAudit.AuditSetRateLimit(s, 600)
+	var i string
+	if _, ok := rules["rate"]; ok {
+		i = rules["rate"].(string)
+	} else {
+		i = "600"
+	}
+	r,err := strconv.Atoi(i)
+	if err != nil {
+		log.Fatalln("Error converting rate limit to integer", err)
+	}
+
+	err = netlinkAudit.AuditSetRateLimit(s, r)
 	if err != nil {
 		log.Fatalln("Error Setting Rate Limit", err)
 	}
 
 	// Set max limit audit message queue
-	err = netlinkAudit.AuditSetBacklogLimit(s, 420)
+	if _, ok := rules["buffer"]; ok {
+		i = rules["rate"].(string)
+	} else {
+		i = "420"
+	}
+	b, _ := strconv.Atoi(i)
+	err = netlinkAudit.AuditSetBacklogLimit(s, b)
 	if err != nil {
 		log.Fatalln("Error Setting Backlog Limit", err)
 	}
+
 
 	// Register current pid with audit
 	err = netlinkAudit.AuditSetPid(s, uint32(syscall.Getpid()))
@@ -74,21 +116,13 @@ func main() {
 		log.Println("Set pid successful")
 	}
 
-
-	// Load all rules
-	content, err := ioutil.ReadFile("audit.rules.json")
-	if err != nil {
-		log.Print("Error:", err)
-		os.Exit(0)
-	}
-
 	// Set audit rules
-	err = netlinkAudit.SetRules(s, content)
-	// err = netlinkAudit.DeleteAllRules(s)
+	err = netlinkAudit.SetRules(s, out)
 	if err != nil {
-		log.Fatalln("Setting Rules Unsuccessful, Exiting", err)
+		log.Fatalln("Setting Rule Unsuccessful: ", err)
 	}
 
+	
 	f, err := os.OpenFile("/tmp/log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0660)
 	if err != nil {
 		log.Fatalln("Unable to open file")

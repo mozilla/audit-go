@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strconv"
 	"log/syslog"
+	"fmt"
 )
 
 
@@ -61,9 +62,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	out, err := exec.Command(dir+"/tools/rules2json.py", dir+"/"+os.Args[1]).Output()
-	if err != nil {
-		log.Fatal(err)
+
+	var out []byte
+	if len(os.Args) > 1 {	
+		out, err = exec.Command(dir+"/tools/rules2json.py", dir+"/"+os.Args[1]).Output()
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		fmt.Println("Usage: sudo go run main.go audit.rules")
+		os.Exit(0)
 	}
 
 	var m interface{}

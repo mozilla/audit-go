@@ -28,21 +28,23 @@ func logLine(data string) {
 
 func EventCallback(msg *netlinkAudit.AuditEvent, ce chan error, args ...interface{}) {
 
-	// convert to JSON
-	jsonString, err := json.Marshal(msg.Data)
-	if err != nil {
-		log.Println(err)
-	} else {
-		log.Println("Type="+msg.Type +" Info="+string(jsonString))
-	}
+	if msg != nil {
+		// convert to JSON
+		jsonString, err := json.Marshal(msg.Data)
+		if err != nil {
+			log.Println(err)
+		} else {
+			log.Println("Type="+msg.Type +" Info="+string(jsonString))
+		}
 
-	//f := args[0].(os.File)
-	//_, err = f.WriteString(msg.Raw)
-	
-	logLine(string(jsonString))
-	if err != nil {
-		log.Println("Writing Error!!", err)
-	}
+		//f := args[0].(os.File)
+		//_, err = f.WriteString(msg.Raw)
+		
+		logLine(string(jsonString))
+		if err != nil {
+			log.Println("Writing Error!!", err)
+		}
+	} 
 }
 
 func main() {
@@ -128,6 +130,8 @@ func main() {
 		err = netlinkAudit.DeleteAllRules(s)
 		if err != nil {
 			log.Fatalln("Deleting Rules Unsuccessful, Exiting", err)
+		} else {
+			log.Println("Done setting syscall.")
 		}
 	}
 

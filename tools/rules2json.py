@@ -101,5 +101,5 @@ with open(sys.argv[1], 'r') as my_file:
 	final = json.dumps(final, indent=4, separators=(',', ': '))
 	print(final)
 
-with open('audit.rules.json', 'w') as outfile:
+#with open('audit.rules.json', 'w') as outfile:
 	#outfile.write(final)

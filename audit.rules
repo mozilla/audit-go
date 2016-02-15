@@ -46,11 +46,11 @@ audit.rules:
 -A exit,never -F path=/bin/touch -F perm=x
 
 # Setup the exec monitoring for all other cases
--a exit,always -F arch=b64 -S execve -k exec
--a exit,always -F arch=b32 -S execve -k exec
+#-a exit,always -F arch=b64 -S execve -k exec
+#-a exit,always -F arch=b32 -S execve -k exec
 
--a entry,always -S clone -S fork -S vfork
--a entry,always -S access -F a1=4
+#-a entry,always -S clone -S fork -S vfork
+#-a entry,always -S access -F a1=4
 
 ## Log changes to system configuration files.
 # Modify audit configuration
@@ -74,6 +74,5 @@ audit.rules:
  
 
 # Time changes
--a always,exit -F arch=b32 -S adjtimex -S setti`meofday -k time-change
--a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change
-
+#-a always,exit -F arch=b32 -S adjtimex -S settimeofday -k time-change
+#-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change

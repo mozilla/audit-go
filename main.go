@@ -4,17 +4,30 @@ import (
 	"./libaudit-go"
 	"log"
 	"os"
-	//"io/ioutil"
 	"syscall"
 	"encoding/json"
 	"os/exec"
 	"strconv"
+	"log/syslog"
 )
+
 
 var done chan bool
 var debug bool
+var sysLog *syslog.Writer
+
+func logLine(data string) {
+	if sysLog == nil {
+		sysLog, _ = syslog.Dial("", "", syslog.LOG_LOCAL0|syslog.LOG_WARNING, "auditd")
+	}
+	if data != "" {
+		sysLog.Write([]byte(data))
+	}
+}
+
 
 func EventCallback(msg *netlinkAudit.AuditEvent, ce chan error, args ...interface{}) {
+
 	// convert to JSON
 	jsonString, err := json.Marshal(msg.Data)
 	if err != nil {
@@ -23,8 +36,10 @@ func EventCallback(msg *netlinkAudit.AuditEvent, ce chan error, args ...interfac
 		log.Println("Type="+msg.Type +" Info="+string(jsonString))
 	}
 
-	f := args[0].(os.File)
-	_, err = f.WriteString(msg.Raw)
+	//f := args[0].(os.File)
+	//_, err = f.WriteString(msg.Raw)
+	
+	logLine(string(jsonString))
 	if err != nil {
 		log.Println("Writing Error!!", err)
 	}
@@ -70,15 +85,6 @@ func main() {
 		log.Fatalln("Error while fetching status", err)
 	}
 
-	//Delete all rules
-	if _, ok := rules["delete"]; ok {
-		log.Println("Deleting all rules")
-		err = netlinkAudit.DeleteAllRules(s)
-		if err != nil {
-			log.Fatalln("Deleting Rules Unsuccessful, Exiting", err)
-		}
-	}
-
 	// Set the maximum number of messages
 	// that the kernel will send per second
 	var i string
@@ -116,22 +122,33 @@ func main() {
 		log.Println("Set pid successful")
 	}
 
+	//Delete all rules
+	if _, ok := rules["delete"]; ok {
+		log.Println("Deleting all rules")
+		err = netlinkAudit.DeleteAllRules(s)
+		if err != nil {
+			log.Fatalln("Deleting Rules Unsuccessful, Exiting", err)
+		}
+	}
+
 	// Set audit rules
 	err = netlinkAudit.SetRules(s, out)
 	if err != nil {
 		log.Fatalln("Setting Rule Unsuccessful: ", err)
 	}
 
-	
-	f, err := os.OpenFile("/tmp/log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0660)
-	if err != nil {
-		log.Fatalln("Unable to open file")
-	}
-	defer f.Close()
+
 	errchan := make(chan error)
 
 	// Go rutine to monitor events and feet AuditEvent type events to the callback
-	netlinkAudit.GetAuditEvents(s, EventCallback, errchan, *f)
+	netlinkAudit.GetAuditEvents(s, EventCallback, errchan)
+
+	
+	/*f, err := os.OpenFile("/tmp/log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0660)
+	if err != nil {
+		log.Fatalln("Unable to open file")
+	}
+	defer f.Close()*/
 
 	select {}
 }

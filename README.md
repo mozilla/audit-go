@@ -4,7 +4,7 @@ This project aims to deliver the same functionality as Linux Audit (auditd, audi
 
 Currently the project listen for events from the kernel via the Netlink protocol and parse the messages and save them in `/tmp/log`.
 
-Currently the Heka plugin is provided externally. Heka reads input using [Logstreamer](http://hekad.readthedocs.org/en/v0.10.0/config/inputs/logstreamer.html) from the file saved by `audit-go` and uses a custom lua decoder ([SandBoxed](http://hekad.readthedocs.org/en/v0.10.0/config/decoders/sandbox.html) decoder in Heka) defined in `audit_decoder.lua` which parses the audit messages and covert them to Heka Messages.
+Currently the Heka plugin is provided externally. Heka reads input using [Logstreamer](http://hekad.readthedocs.org/en/v0.10.0/config/inputs/logstreamer.html) from the file saved by `audit-go` and uses a custom lua decoder ([SandBoxed](http://hekad.readthedocs.org/en/v0.10.0/config/decoders/sandbox.html) decoder in Heka) defined in `audit_decoder.lua` which parses the audit messages and convert them to Heka Messages.
 
 The messages are then converted to JSON format using [ESJsonEncoder](http://hekad.readthedocs.org/en/v0.10.0/config/encoders/esjson.html) of Heka.
 

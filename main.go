@@ -1,17 +1,17 @@
 package main
 
 import (
-	"./libaudit-go"
-	"log"
-	"os"
-	"syscall"
 	"encoding/json"
+	"fmt"
+	"log"
+	"log/syslog"
+	"os"
 	"os/exec"
 	"strconv"
-	"log/syslog"
-	"fmt"
-)
+	"syscall"
 
+	"github.com/mozilla/libaudit-go"
+)
 
 var done chan bool
 var debug bool
@@ -26,7 +26,6 @@ func logLine(data string) {
 	}
 }
 
-
 func EventCallback(msg *netlinkAudit.AuditEvent, ce chan error, args ...interface{}) {
 
 	if msg != nil {
@@ -35,17 +34,17 @@ func EventCallback(msg *netlinkAudit.AuditEvent, ce chan error, args ...interfac
 		if err != nil {
 			log.Println(err)
 		} else {
-			log.Println("Type="+msg.Type +" Info="+string(jsonString))
+			log.Println("Type=" + msg.Type + " Info=" + string(jsonString))
 		}
 
 		//f := args[0].(os.File)
 		//_, err = f.WriteString(msg.Raw)
-		
+
 		logLine(string(jsonString))
 		if err != nil {
 			log.Println("Writing Error!!", err)
 		}
-	} 
+	}
 }
 
 func main() {
@@ -62,9 +61,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-
 	var out []byte
-	if len(os.Args) > 1 {	
+	if len(os.Args) > 1 {
 		out, err = exec.Command(dir+"/tools/rules2json.py", dir+"/"+os.Args[1]).Output()
 		if err != nil {
 			log.Fatal(err)
@@ -76,7 +74,7 @@ func main() {
 
 	var m interface{}
 	err = json.Unmarshal(out, &m)
-	rules:= m.(map[string]interface{})
+	rules := m.(map[string]interface{})
 
 	// Enable Audit
 	err = netlinkAudit.AuditSetEnabled(s, 1)
@@ -103,7 +101,7 @@ func main() {
 	} else {
 		i = "600"
 	}
-	r,err := strconv.Atoi(i)
+	r, err := strconv.Atoi(i)
 	if err != nil {
 		log.Fatalln("Error converting rate limit to integer", err)
 	}
@@ -125,7 +123,6 @@ func main() {
 		log.Fatalln("Error Setting Backlog Limit", err)
 	}
 
-
 	// Register current pid with audit
 	err = netlinkAudit.AuditSetPid(s, uint32(syscall.Getpid()))
 	if err == nil {
@@ -144,18 +141,16 @@ func main() {
 	}
 
 	// Set audit rules
-	err = netlinkAudit.SetRules(s, out)
+	err = netlinkAudit.SetRules(s, out, dir)
 	if err != nil {
 		log.Fatalln("Setting Rule Unsuccessful: ", err)
 	}
-
 
 	errchan := make(chan error)
 
 	// Go rutine to monitor events and feet AuditEvent type events to the callback
 	netlinkAudit.GetAuditEvents(s, EventCallback, errchan)
 
-	
 	/*f, err := os.OpenFile("/tmp/log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0660)
 	if err != nil {
 		log.Fatalln("Unable to open file")

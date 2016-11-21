@@ -1,5 +1,12 @@
 #Linux Audit Heka Plugin (GO)
 
+
+### Note:
+
+The project has now been divided into two parts, the API to deal with linux kernel audit framework is now provided by [libaudit-go](https://github.com/mozilla/libaudit-go) (in current development) and the client (audit-go) which provides an example to leverage libaudit-go.
+
+-----------------------
+
 This project aims to deliver the same functionality as Linux Audit (auditd, audispd) + audisp-cef/json but in native Go as a plugin to Heka.
 
 Currently the project listen for events from the kernel via the Netlink protocol and parse the messages and save them in `/tmp/log`.

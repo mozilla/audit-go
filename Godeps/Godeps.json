@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/mozilla/audit-go",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v60",
+	"Deps": [
+		{
+			"ImportPath": "github.com/mozilla/libaudit-go",
+			"Rev": "20ea27794d60a92871ca6979cc644409d80b06a4"
+		}
+	]
+}

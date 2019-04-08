@@ -1,4 +1,0 @@
-[submodule "libaudit-go"]
-	path = libaudit-go
-	url = git@github.com:mozilla/libaudit-go.git
-	branch = master
